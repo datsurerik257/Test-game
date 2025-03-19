@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Klikker Spillet</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #1a1a2e; /* Mørk bakgrunn som representerer verdensrommet */
+            color: white;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-top: 20px;
+        }
+        #score {
+            font-size: 2em;
+            margin-top: 20px;
+        }
+        #click-button {
+            font-size: 1.5em;
+            padding: 20px;
+            margin-top: 20px;
+            cursor: pointer;
+            background-color: #ff6347; /* Romskip knapp-farge */
+            color: white;
+            border: none;
+            border-radius: 10px;
+            transition: 0.3s;
+        }
+        #click-button:hover {
+            background-color: #ff4500;
+        }
+        .shop {
+            margin-top: 40px;
+            font-size: 1.2em;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .shop-item {
+            margin: 20px;
+            text-align: center;
+        }
+        .shop-item button {
+            padding: 10px 20px;
+            background-color: #4caf50;
+            color: white;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .shop-item button:hover {
+            background-color: #45a049;
+        }
+        .planet {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background-color: #4b0082;
+            margin: 10px auto;
+        }
+
+        /* Responsiv tilpassning */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2em;
+            }
+            #score {
+                font-size: 1.5em;
+            }
+            #click-button {
+                font-size: 1.2em;
+                padding: 15px;
+            }
+            .shop-item {
+                flex: 1 1 45%; /* Gjør butikk-elementer litt mindre */
+                margin: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Space Klikker Spillet!</h1>
+    <p id="score">Poeng: 0</p>
+    
+    <!-- Klikk knapp med romskip emoji -->
+    <button id="click-button">
+        🚀 Klikk på romskipet!
+    </button>
+
+    <div class="shop">
+        <h2>Rombutikk</h2>
+        <p>Oppgrader romskipet ditt!</p>
+
+        <!-- Poeng per klikk oppgradering -->
+        <div class="shop-item">
+            <span style="font-size: 3em;">🚀</span>
+            <p>Poeng per klikk (Nåværende: <span id="click-power">1</span>)</p>
+            <button id="upgrade-click">Kjøp: 10 poeng</button>
+        </div>
+
+        <!-- Auto-clicker oppgradering -->
+        <div class="shop-item">
+            <span style="font-size: 3em;">🤖</span>
+            <p>Auto-klikking (Få poeng automatisk)</p>
+            <button id="upgrade-auto-click">Kjøp: 50 poeng</button>
+        </div>
+
+        <!-- Auto-clicker styrke oppgradering -->
+        <div class="shop-item">
+            <span style="font-size: 3em;">⚡</span>
+            <p>Øk Auto-Clicker styrke (Generer mer per sekund)</p>
+            <button id="upgrade-auto-click-strength">Kjøp: 100 poeng</button>
+        </div>
+
+        <div class="planet"></div>
+    </div>
+
+    <script>
+        let score = 0;
+        let clickPower = 1; // Starter med 1 poeng per klikk
+        let autoClickerEnabled = false;
+        let autoClickerStrength = 1; // Hvor mye auto-clickeren genererer per sekund
+        let autoClickerInterval;
+
+        const scoreElement = document.getElementById("score");
+        const clickButton = document.getElementById("click-button");
+        const upgradeClickButton = document.getElementById("upgrade-click");
+        const upgradeAutoClickButton = document.getElementById("upgrade-auto-click");
+        const upgradeAutoClickStrengthButton = document.getElementById("upgrade-auto-click-strength");
+        const clickPowerElement = document.getElementById("click-power");
+
+        // Oppdater poengsummen
+        function updateScore() {
+            scoreElement.textContent = "Poeng: " + score;
+            clickPowerElement.textContent = clickPower;
+        }
+
+        // Klikk på romskipet
+        clickButton.addEventListener("click", function() {
+            score += clickPower;
+            updateScore();
+        });
+
+        // Kjøp oppgradering for poeng per klikk
+        upgradeClickButton.addEventListener("click", function() {
+            if (score >= 10) {
+                score -= 10;
+                clickPower += 1; // Øker poeng per klikk
+                updateScore();
+            } else {
+                alert("Du trenger 10 poeng for å kjøpe poeng per klikk!");
+            }
+        });
+
+        // Kjøp Auto-Clicker
+        upgradeAutoClickButton.addEventListener("click", function() {
+            if (score >= 50 && !autoClickerEnabled) {
+                score -= 50;
+                autoClickerEnabled = true;
+                updateScore();
+                startAutoClicker();
+                upgradeAutoClickButton.disabled = true; // Deaktiverer knappen etter kjøp
+                upgradeAutoClickButton.textContent = "Auto-Clicker Kjøpt!";
+            } else if (autoClickerEnabled) {
+                alert("Auto-Clicker er allerede aktivert!");
+            } else {
+                alert("Du trenger 50 poeng for å kjøpe Auto-Clicker!");
+            }
+        });
+
+        // Øk Auto-Clicker styrken
+        upgradeAutoClickStrengthButton.addEventListener("click", function() {
+            if (score >= 100 && autoClickerEnabled) {
+                score -= 100;
+                autoClickerStrength += 1; // Øker hvor mye auto-clickeren genererer per sekund
+                updateScore();
+                clearInterval(autoClickerInterval); // Stopper eksisterende auto-clicker
+                startAutoClicker(); // Starter auto-clickeren på nytt med høyere styrke
+                upgradeAutoClickStrengthButton.textContent = "Auto-Clicker Styrke Økt!";
+            } else if (!autoClickerEnabled) {
+                alert("Du må aktivere Auto-Clicker først!");
+            } else {
+                alert("Du trenger 100 poeng for å øke Auto-Clicker styrken!");
+            }
+        });
+
+        // Start automatisk poengsamling
+        function startAutoClicker() {
+            autoClickerInterval = setInterval(function() {
+                score += autoClickerStrength; // Hver 1 sekund får du poeng basert på styrken
+                updateScore();
+            }, 1000); // Hver 1 sekund
+        }
+
+        // Initial oppdatering
+        updateScore();
+
+    </script>
+
+</body>
+</html>
